@@ -1,13 +1,27 @@
 package routes
 
 import (
+	"net/http"
 	"os"
 
 	"github.com/danielsugianto/alterra-agmc-day3/controllers"
 	m "github.com/danielsugianto/alterra-agmc-day3/middlewares"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
+
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *CustomValidator) Validate(i interface{}) error {
+	if err := cv.validator.Struct(i); err != nil {
+		// Optionally, you could return the error to give each route more control over the status code
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	return nil
+}
 
 func New() *echo.Echo {
 	keySecret := os.Getenv("JWT_SECRET")
@@ -15,9 +29,11 @@ func New() *echo.Echo {
 		panic("JWT Secret Missing")
 	}
 	e := echo.New()
+	//call validator
+	e.Validator = &CustomValidator{validator: validator.New()}
+
 	// call log middleware
 	m.LogMiddlewares(e)
-
 	v1 := e.Group("/v1")
 	v1.POST("/login", controllers.LoginUsersController)
 

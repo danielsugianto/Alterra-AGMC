@@ -25,6 +25,9 @@ func GetBooksController(c echo.Context) error {
 func CreateBookController(c echo.Context) error {
 	book := models.Book{}
 	c.Bind(&book)
+	if err := c.Validate(book); err != nil {
+		return err
+	}
 	newBook, err := database.CreateBook(book)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())

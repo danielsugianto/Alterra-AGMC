@@ -28,7 +28,9 @@ func GetUsersController(c echo.Context) error {
 func CreateUserController(c echo.Context) error {
 	user := models.User{}
 	c.Bind(&user)
-
+	if err := c.Validate(user); err != nil {
+		return err
+	}
 	user, err := database.CreateUser(user)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
