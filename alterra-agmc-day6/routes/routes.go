@@ -23,7 +23,7 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 	return nil
 }
 
-func New(usersController models.UsersController) *echo.Echo {
+func New(usersController models.UsersController, booksController models.BooksController) *echo.Echo {
 	keySecret := os.Getenv("JWT_SECRET")
 	if keySecret == "" {
 		panic("JWT Secret Missing")
@@ -36,13 +36,13 @@ func New(usersController models.UsersController) *echo.Echo {
 	m.LogMiddlewares(e)
 	v1 := e.Group("/v1")
 	UnauthenticatedUserRoutes(v1, usersController)
-	UnauthenticatedBookRoutes(v1)
+	UnauthenticatedBookRoutes(v1, booksController)
 
 	//Authenticated URL
 	authenticatedV1 := e.Group("/v1")
 	//call middleware JWT
 	authenticatedV1.Use(middleware.JWT([]byte(keySecret)))
 	AuthenticatedUserRoutes(authenticatedV1, usersController)
-	AuthenticatedBookRoutes(authenticatedV1)
+	AuthenticatedBookRoutes(authenticatedV1, booksController)
 	return e
 }

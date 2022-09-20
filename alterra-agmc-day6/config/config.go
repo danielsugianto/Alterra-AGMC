@@ -1,9 +1,12 @@
 package config
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/danielsugianto/alterra-agmc-day6/models"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -34,6 +37,24 @@ func InitialDB() *gorm.DB {
 	return DB
 }
 
+func InitialMongoDB() *mongo.Database {
+	var ctx = context.Background()
+
+	clientOptions := options.Client()
+	clientOptions.ApplyURI("mongodb://localhost:27017")
+	client, err := mongo.NewClient(clientOptions)
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = client.Connect(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return client.Database("agmc")
+}
 func InitialMigration(DB *gorm.DB) {
 	DB.AutoMigrate(&models.User{})
 }
