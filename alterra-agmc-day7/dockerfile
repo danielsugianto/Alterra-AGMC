@@ -12,6 +12,5 @@ RUN go build -o /agmc-day-7
 FROM alpine:3.16.0
 WORKDIR /app
 COPY --from=builder agmc-day-7 .
-COPY .env .
 EXPOSE 8080
 CMD ["./agmc-day-7"]

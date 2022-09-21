@@ -1,20 +1,11 @@
 package routes
 
 import (
-	"github.com/danielsugianto/alterra-agmc-day7/config"
 	"github.com/danielsugianto/alterra-agmc-day7/models"
-	"gorm.io/gorm"
 
 	"github.com/labstack/echo/v4"
 )
 
-var (
-	DB *gorm.DB
-)
-
-func init() {
-	config.InitialDB()
-}
 func UnauthenticatedUserRoutes(e *echo.Group, usersController models.UsersController) {
 	e.POST("/login", usersController.LoginUsersController)
 	e.POST("/users", usersController.CreateUserController)

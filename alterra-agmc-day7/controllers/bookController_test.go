@@ -6,9 +6,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/danielsugianto/alterra-agmc-day7/config"
+	"github.com/danielsugianto/alterra-agmc-day7/lib/database"
+	"github.com/danielsugianto/alterra-agmc-day7/usecase"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var (
@@ -16,7 +20,13 @@ var (
 	notExistsBookIdString = "asd"
 )
 
+var (
+	MongoDB *mongo.Database
+)
+
 func TestCreateBookControllerValid(t *testing.T) {
+	//init DB
+	MongoDB = config.InitialMongoDB()
 	//body request
 	bookJSON := `{
 		"id":2,
@@ -24,6 +34,9 @@ func TestCreateBookControllerValid(t *testing.T) {
 		"year": 1998
 	}`
 	//setup
+	booksMongoDBRepo := database.NewMongoDBBooksRepository(MongoDB)
+	booksUsecase := usecase.NewBooksUsecase(booksMongoDBRepo)
+	booksController := NewBooksController(booksUsecase)
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
 	req := httptest.NewRequest(http.MethodPost, "/v1/books", strings.NewReader(bookJSON))
@@ -32,14 +45,19 @@ func TestCreateBookControllerValid(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	// Assertions
-	if assert.NoError(t, CreateBookController(c)) {
+	if assert.NoError(t, booksController.CreateBookController(c)) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 		// assert.Equal(t, d, rec.Body.String())
 	}
 
 }
 func TestCreateBookControllerInvalid(t *testing.T) {
+	//init DB
+	MongoDB = config.InitialMongoDB()
 
+	booksMongoDBRepo := database.NewMongoDBBooksRepository(MongoDB)
+	booksUsecase := usecase.NewBooksUsecase(booksMongoDBRepo)
+	booksController := NewBooksController(booksUsecase)
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
 	//body request
@@ -54,12 +72,18 @@ func TestCreateBookControllerInvalid(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	// Assertions
-	if assert.NoError(t, CreateBookController(c)) {
+	if assert.NoError(t, booksController.CreateBookController(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	}
 }
 
 func TestGetBooksControllerValid(t *testing.T) {
+	//init DB
+	MongoDB = config.InitialMongoDB()
+
+	booksMongoDBRepo := database.NewMongoDBBooksRepository(MongoDB)
+	booksUsecase := usecase.NewBooksUsecase(booksMongoDBRepo)
+	booksController := NewBooksController(booksUsecase)
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
 	req := httptest.NewRequest(http.MethodGet, "/v1/books", nil)
@@ -68,12 +92,18 @@ func TestGetBooksControllerValid(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	// Assertions
-	if assert.NoError(t, GetBooksController(c)) {
+	if assert.NoError(t, booksController.GetBooksController(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 	}
 }
 
 func TestGetBookControllerValid(t *testing.T) {
+	//init DB
+	MongoDB = config.InitialMongoDB()
+
+	booksMongoDBRepo := database.NewMongoDBBooksRepository(MongoDB)
+	booksUsecase := usecase.NewBooksUsecase(booksMongoDBRepo)
+	booksController := NewBooksController(booksUsecase)
 
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
@@ -85,13 +115,18 @@ func TestGetBookControllerValid(t *testing.T) {
 	c.SetParamValues(actualBookIdString)
 
 	// Assertions
-	if assert.NoError(t, GetBookController(c)) {
+	if assert.NoError(t, booksController.GetBookController(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 	}
 }
 
 func TestGetBookControllerInvalid(t *testing.T) {
+	//init DB
+	MongoDB = config.InitialMongoDB()
 
+	booksMongoDBRepo := database.NewMongoDBBooksRepository(MongoDB)
+	booksUsecase := usecase.NewBooksUsecase(booksMongoDBRepo)
+	booksController := NewBooksController(booksUsecase)
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
 	req := httptest.NewRequest(http.MethodGet, "/v1/books/", nil)
@@ -102,13 +137,19 @@ func TestGetBookControllerInvalid(t *testing.T) {
 	c.SetParamValues(notExistsBookIdString)
 
 	// Assertions
-	if assert.NoError(t, GetBookController(c)) {
+	if assert.NoError(t, booksController.GetBookController(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	}
 }
 
 func TestUpdateBookControllerValid(t *testing.T) {
 
+	//init DB
+	MongoDB = config.InitialMongoDB()
+
+	booksMongoDBRepo := database.NewMongoDBBooksRepository(MongoDB)
+	booksUsecase := usecase.NewBooksUsecase(booksMongoDBRepo)
+	booksController := NewBooksController(booksUsecase)
 	e := echo.New()
 	//body request
 	updateBookJSON := `{
@@ -125,12 +166,18 @@ func TestUpdateBookControllerValid(t *testing.T) {
 	c.SetParamValues(actualBookIdString)
 
 	// Assertions
-	if assert.NoError(t, UpdateBookController(c)) {
+	if assert.NoError(t, booksController.UpdateBookController(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 	}
 }
 
 func TestUpdateBookControllerInvalid(t *testing.T) {
+	//init DB
+	MongoDB = config.InitialMongoDB()
+
+	booksMongoDBRepo := database.NewMongoDBBooksRepository(MongoDB)
+	booksUsecase := usecase.NewBooksUsecase(booksMongoDBRepo)
+	booksController := NewBooksController(booksUsecase)
 
 	e := echo.New()
 	//body request
@@ -148,13 +195,19 @@ func TestUpdateBookControllerInvalid(t *testing.T) {
 	c.SetParamValues(notExistsBookIdString)
 
 	// Assertions
-	if assert.NoError(t, UpdateBookController(c)) {
+	if assert.NoError(t, booksController.UpdateBookController(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	}
 }
 
 func TestDeleteBookControllerValid(t *testing.T) {
 
+	//init DB
+	MongoDB = config.InitialMongoDB()
+
+	booksMongoDBRepo := database.NewMongoDBBooksRepository(MongoDB)
+	booksUsecase := usecase.NewBooksUsecase(booksMongoDBRepo)
+	booksController := NewBooksController(booksUsecase)
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
 	req := httptest.NewRequest(http.MethodDelete, "/v1/books/", nil)
@@ -164,13 +217,18 @@ func TestDeleteBookControllerValid(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues(actualBookIdString)
 	// Assertions
-	if assert.NoError(t, DeleteBookController(c)) {
+	if assert.NoError(t, booksController.DeleteBookController(c)) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 	}
 }
 
 func TestDeleteBookControllerInvalid(t *testing.T) {
+	//init DB
+	MongoDB = config.InitialMongoDB()
 
+	booksMongoDBRepo := database.NewMongoDBBooksRepository(MongoDB)
+	booksUsecase := usecase.NewBooksUsecase(booksMongoDBRepo)
+	booksController := NewBooksController(booksUsecase)
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
 	req := httptest.NewRequest(http.MethodPut, "/v1/books/", nil)
@@ -181,7 +239,7 @@ func TestDeleteBookControllerInvalid(t *testing.T) {
 	c.SetParamValues(notExistsBookIdString)
 
 	// Assertions
-	if assert.NoError(t, DeleteBookController(c)) {
+	if assert.NoError(t, booksController.DeleteBookController(c)) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	}
 }

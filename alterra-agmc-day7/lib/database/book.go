@@ -1,72 +1,96 @@
 package database
 
 import (
+	"context"
+	"log"
 	"strconv"
 
 	"github.com/danielsugianto/alterra-agmc-day7/models"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var books []models.Book
+type mongoDBBooksRepository struct {
+	mongoDB *mongo.Database
+}
 
-func init() {
-	books = append(books, models.Book{ID: 1, Name: "book 1", Year: 2010})
-	books = append(books, models.Book{ID: 2, Name: "book 2", Year: 2011})
-	books = append(books, models.Book{ID: 3, Name: "book 3", Year: 2012})
-	books = append(books, models.Book{ID: 4, Name: "book 4", Year: 2013})
-	books = append(books, models.Book{ID: 5, Name: "book 5", Year: 2014})
+// NewMongoDBBooksRepository will create an object that represent the users.Repository interface
+func NewMongoDBBooksRepository(mongoDB *mongo.Database) models.BooksMongoDBRepository {
+	return &mongoDBBooksRepository{mongoDB}
 }
 
 // get all books
-func GetBooks() ([]models.Book, error) {
+func (mongoDBBooksRepository *mongoDBBooksRepository) GetBooks() ([]models.Book, error) {
+	var books []models.Book
+	findOptions := options.Find()
+
+	csr, err := mongoDBBooksRepository.mongoDB.Collection("books").Find(context.Background(), findOptions)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer csr.Close(context.Background())
+
+	for csr.Next(context.Background()) {
+		var row models.Book
+		err := csr.Decode(&row)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		books = append(books, row)
+	}
 	return books, nil
 }
 
 // create new book
-func CreateBook(book models.Book) (models.Book, error) {
-	books = append(books, book)
+func (mongoDBBooksRepository *mongoDBBooksRepository) CreateBook(book models.Book) (models.Book, error) {
+	_, err := mongoDBBooksRepository.mongoDB.Collection("books").InsertOne(context.Background(), book)
+	if err != nil {
+		return book, err
+	}
 	return book, nil
 }
 
 // get book by ID
-func GetBook(id string) (models.Book, error) {
+func (mongoDBBooksRepository *mongoDBBooksRepository) GetBook(id string) (models.Book, error) {
 	idInt, _ := strconv.Atoi(id)
 	var getBook models.Book
 
-	for _, book := range books {
-		if book.ID == idInt {
-			getBook = book
-			break
+	var selector = bson.M{"id": idInt}
+	err := mongoDBBooksRepository.mongoDB.Collection("books").FindOne(context.Background(), selector).Decode(&getBook)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			// This error means your query did not match any documents.
+			return getBook, nil
 		}
+		log.Fatal(err.Error())
 	}
 	return getBook, nil
 }
 
 // delete book by ID
-func DeleteBook(id string) error {
+func (mongoDBBooksRepository *mongoDBBooksRepository) DeleteBook(id string) error {
 	idInt, _ := strconv.Atoi(id)
-
-	for i, book := range books {
-		if book.ID == idInt {
-			books[i] = books[len(books)-1]
-			books[len(books)-1] = models.Book{}
-			books = books[:len(books)-1]
-			break
-		}
+	var selector = bson.M{"id": idInt}
+	_, err := mongoDBBooksRepository.mongoDB.Collection("books").DeleteOne(context.Background(), selector)
+	if err != nil {
+		log.Fatal(err.Error())
 	}
 	return nil
 }
 
 // update book by ID
-func UpdateBook(id string, bookParam models.Book) (models.Book, error) {
+func (mongoDBBooksRepository *mongoDBBooksRepository) UpdateBook(id string, bookParam models.Book) (models.Book, error) {
 	var book models.Book
 	idInt, _ := strconv.Atoi(id)
-	for i := range books {
-		if books[i].ID == idInt {
-			books[i].Name = bookParam.Name
-			books[i].Year = bookParam.Year
-			book = books[i]
-			break
-		}
+	var selector = bson.M{"id": idInt}
+	book.ID = idInt
+	book.Name = bookParam.Name
+	book.Year = bookParam.Year
+	_, err := mongoDBBooksRepository.mongoDB.Collection("books").UpdateOne(context.Background(), selector, bson.M{"$set": book})
+	if err != nil {
+		log.Fatal(err.Error())
 	}
 	return book, nil
 }

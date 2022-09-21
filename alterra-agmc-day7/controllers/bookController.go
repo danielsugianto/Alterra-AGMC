@@ -4,15 +4,25 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/danielsugianto/alterra-agmc-day7/lib/database"
 	"github.com/danielsugianto/alterra-agmc-day7/models"
 	"github.com/labstack/echo/v4"
 )
 
+type booksController struct {
+	booksUsecase models.BooksUsecase
+}
+
+// NewBooksUsecase will create new an booksController object representation of domain.BooksUsecase interface
+func NewBooksController(booksUsecase models.BooksUsecase) models.BooksController {
+	return &booksController{
+		booksUsecase: booksUsecase,
+	}
+}
+
 // get all books
-func GetBooksController(c echo.Context) error {
+func (booksController *booksController) GetBooksController(c echo.Context) error {
 	var books []models.Book
-	books, err := database.GetBooks()
+	books, err := booksController.booksUsecase.GetBooksUsecase()
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -23,13 +33,13 @@ func GetBooksController(c echo.Context) error {
 }
 
 // create new book
-func CreateBookController(c echo.Context) error {
+func (booksController *booksController) CreateBookController(c echo.Context) error {
 	book := models.Book{}
 	c.Bind(&book)
 	if err := c.Validate(book); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	newBook, err := database.CreateBook(book)
+	newBook, err := booksController.booksUsecase.CreateBookUsecase(book)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -40,14 +50,14 @@ func CreateBookController(c echo.Context) error {
 }
 
 // get book by ID
-func GetBookController(c echo.Context) error {
+func (booksController *booksController) GetBookController(c echo.Context) error {
 	id := c.Param("id")
 	var book models.Book
 	_, errConv := strconv.Atoi(id)
 	if errConv != nil {
 		return c.JSON(http.StatusBadRequest, "Can't Get Book")
 	}
-	book, err := database.GetBook(id)
+	book, err := booksController.booksUsecase.GetBookUsecase(id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -58,14 +68,14 @@ func GetBookController(c echo.Context) error {
 }
 
 // delete book by ID
-func DeleteBookController(c echo.Context) error {
+func (booksController *booksController) DeleteBookController(c echo.Context) error {
 	id := c.Param("id")
 
 	_, errConv := strconv.Atoi(id)
 	if errConv != nil {
 		return c.JSON(http.StatusBadRequest, "Can't Delete Book")
 	}
-	err := database.DeleteBook(id)
+	err := booksController.booksUsecase.DeleteBookUsecase(id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -75,7 +85,7 @@ func DeleteBookController(c echo.Context) error {
 }
 
 // update book by ID
-func UpdateBookController(c echo.Context) error {
+func (booksController *booksController) UpdateBookController(c echo.Context) error {
 	id := c.Param("id")
 	bookParam := models.Book{}
 	c.Bind(&bookParam)
@@ -84,7 +94,7 @@ func UpdateBookController(c echo.Context) error {
 	}
 	var book models.Book
 
-	book, err := database.UpdateBook(id, bookParam)
+	book, err := booksController.booksUsecase.UpdateBookUsecase(id, bookParam)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
