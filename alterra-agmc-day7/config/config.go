@@ -41,8 +41,13 @@ func InitialDB() *gorm.DB {
 func InitialMongoDB() *mongo.Database {
 	var ctx = context.Background()
 
+	configMongoDB := map[string]string{
+		"MONGODB_HOST": os.Getenv("MONGODB_HOST"),
+		"MONGODB_PORT": os.Getenv("MONGODB_PORT"),
+	}
 	clientOptions := options.Client()
-	clientOptions.ApplyURI("mongodb://localhost:27017")
+	connectionMongoString := fmt.Sprintf("mongodb://%s:%s", configMongoDB["MONGODB_HOST"], configMongoDB["MONGODB_PORT"])
+	clientOptions.ApplyURI(connectionMongoString)
 	client, err := mongo.NewClient(clientOptions)
 
 	if err != nil {

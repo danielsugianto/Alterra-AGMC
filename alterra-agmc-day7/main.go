@@ -16,14 +16,11 @@ var (
 	MongoDB *mongo.Database
 )
 
-func init() {
-	DB = config.InitialDB()
-	MongoDB = config.InitialMongoDB()
-}
-
 func main() {
 	godotenv.Load(".env")
 
+	DB = config.InitialDB()
+	MongoDB = config.InitialMongoDB()
 	usersMySQLRepo := database.NewMySQLUsersRepository(DB)
 	usersUsecase := usecase.NewUsersUsecase(usersMySQLRepo)
 	usersController := controllers.NewUsersController(usersUsecase)
