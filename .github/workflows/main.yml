@@ -26,12 +26,10 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       
       - name: build docker container
-        run: |
-           docker build -t danielsugianto/agmc-day-10:latest .
+        run: docker build -t danielsugianto/agmc-day-10:latest .
       
       - name: push docker container
-        run: |
-          	docker push danielsugianto/agmc-day-10:latest
+        run: docker push danielsugianto/agmc-day-10:latest
 
   deploy:
     name: Deploy to Heroku on main branch push
